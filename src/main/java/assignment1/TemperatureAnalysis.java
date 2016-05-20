@@ -1,14 +1,14 @@
 package assignment1;
 
 import utilities.FileOptions;
+import utilities.Plot;
 
+import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
+import java.util.*;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -26,11 +26,44 @@ public class TemperatureAnalysis {
 //        tempTimes.forEach(System.out::println);
         Collections.sort(tempTimes,(a,b)->a.time.compareTo(b.time));
         List<Double> temps = tempTimes.stream().map(a->a.temp).collect(Collectors.toList());
-        double[] d = new double[temps.size()];
-        for(int i = 0; i<d.length; i++) d[i] = temps.get(i);
+        double[] d = new double[temps.size()], t = new double[temps.size()];
+        for(int i = 0; i<d.length; i++){
+            t[i] = tempTimes.get(i).time.getTime();
+            d[i] = temps.get(i);
+        }
 
         OneDHaar.orderedFastHaarWaveletTransformForNumIters(d);
+        double[] r = Arrays.copyOfRange(OneDHaar.getResult(),0,d.length);
+
+        OneDHaar.inPlaceFastHaarWaveletTransformForNumIters(d);
+        double[] l = Arrays.copyOfRange(OneDHaar.getResult(),0,d.length);
+
+        String fileName = path+FileOptions.SEPERATOR+"bee_output.txt";
+
+        File f;
+        if((f = new File(fileName)).exists())
+            f.delete();
+        FileOptions.writeToFileAppend(fileName,"Ordered: "+writeArray(r));
+        FileOptions.writeToFileAppend(fileName,"InPlace: "+writeArray(l));
+        FileOptions.writeToFileAppend(fileName,"Times: "+writeArray(t));
+
+        Dimension dd = java.awt.Toolkit.getDefaultToolkit().getScreenSize();
+        new Plot("temperature",t,d).addSeries("orderedHaar",t,r).setType("orderedHaar",Plot.JUST_LINE)
+                .addSeries("inplaceHaar",t,l).setType("inplaceHaar",Plot.JUST_LINE)
+                .setXLabel("Time (ns)")
+                .setPlotTitle("Temperature vs Time and Haar Transforms")
+                .setYLabel("Tempurature & haar transform")
+                .setWindowSize(dd.width,dd.height)
+                .savePlot(path+FileOptions.SEPERATOR+"output.png");
     }
+
+    private static String writeArray(double[] l) {
+        String s = "";
+        for(double d : l)
+            s+=","+d;
+        return s.substring(1);
+    }
+
     public static List<TempTimes> tempTimes = new ArrayList<>();
 
     public static class TempTimes{
