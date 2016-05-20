@@ -7,10 +7,11 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
-import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertTrue;
 
 /**
  *********************************************************************
@@ -108,31 +109,41 @@ public class OneDHaarTest {
 
     @org.testng.annotations.Test
     public void testFile(){
+        boolean f = false;
         for(Test t : testcases){
             System.out.println(t.description);
+            System.out.println(concat(t.testCase));
             for(TestType type : t.tests){
                 double[] res;
                 if("ordered sweep".equals(type.type))
                     OneDHaar.orderedFastHaarWaveletTransformForNumIters(t.testCase,type.number);
                 else if("inplace sweep".equals(type.type))
-                    OneDHaar.inPlaceFastHaarWaveletTransformForNumIters(t.testCase,type.number);
-                checkResult(OneDHaar.getResult(),type.results);
+                    OneDHaar.inPlaceFastHaarWaveletTransformForNumIters(t.testCase, type.number);
+                assertNotNull(OneDHaar.getResult());
+                if(!(f=Arrays.equals(OneDHaar.getResult(),type.results)))
+                    showCompare(OneDHaar.getResult(),type.results);
+                else
+                    System.out.println(type.number+" "+type.type+": "+concat(OneDHaar.getResult()));
             }
         }
+        assertTrue(f);
     }
 
-    private void checkResult(double[] result, double[] ans) {
-        assertNotNull(result);
-        assertEquals(result.length,ans.length);
-        for(int i = 0; i<result.length; i++)
-            assertEquals(result[i],ans[i]);
+    private String concat(double[] arr){
+        String res = "";
+        for (int i = 0; i < arr.length; i++)
+            res+=", "+arr[i];
+        return res.substring(2);
     }
 
-
-    public static void displayArray(double[] ary) {
-        for(int i = 0; i < ary.length; i++) {
-            System.out.print(ary[i] + " ");
-        }
+    private void showCompare(double[] result, double[] results) {
+        System.out.println("GOT: ");
+        for (double d : result)
+            System.out.print(d+", ");
+        System.out.println();
+        System.out.println("Expected: ");
+        for (double d : results)
+            System.out.print(d+", ");
         System.out.println();
     }
 
